@@ -15,63 +15,22 @@ namespace barcode
 
         static void Main(string[] args)
         {
-            Query();
-        }
-
-        static void Query()
-        {
             string StartSymbol = "[105]";
             string VersionNumber = "4";
             string Hash2 = "";
             string StopSymbol = "[stop]";
 
-            Console.WriteLine("Anna saajan tilinumero (esim. FI12 1234 1234 1234 12)");
+            string AccountNumber = "";
+            string Sum = "";
+            string IndexNumber = "";
+            string ExpDate = "";
 
-            string AccountNumber = Console.ReadLine();
             AccountNumber = AccountNumberCheck(AccountNumber);
 
-            Console.Clear();
-            Console.WriteLine("Anna maksun summa (esim. 99,99");
-
-            string Sum = Console.ReadLine();
             Sum = SumCheck(Sum);
 
-            Console.Clear();
-            Console.WriteLine("Anna viitenumero (esim. 123 12345 12345)");
+            IndexNumber = IndexNumberCheck(IndexNumber);
 
-            string IndexNumber = Console.ReadLine();
-
-            Console.Clear();
-            Console.WriteLine("Tarvitaanko viitenumerolle tarkistenumeroa? (y/n)");
-            bool HashNeed = false;
-            int KeyPressCheck = 0;
-            while (KeyPressCheck == 0)
-            {
-                ConsoleKeyInfo info = Console.ReadKey();
-                if (info.KeyChar == 'y')
-                {
-                    HashNeed = true;
-                    KeyPressCheck = 1;
-                }
-                else if (info.KeyChar == 'n')
-                {
-                    HashNeed = false;
-                    KeyPressCheck = 1;
-                }
-                else
-                {
-                    Console.Clear();
-                    Console.WriteLine("Tarvitaanko viitenumerolle tarkistenumeroa? (y/n)");
-                    KeyPressCheck = 0;
-                }
-            }
-            
-            IndexNumber = IndexNumberCheck(IndexNumber, HashNeed);
-
-            Console.Clear();
-            Console.WriteLine("Anna eräpäivä (esim. 01.01.2017)");
-
-            string ExpDate = Console.ReadLine();
             ExpDate = ExpDateCheck(ExpDate);
 
             string VirtualBarCode = VersionNumber + AccountNumber + Sum + "000" + IndexNumber + ExpDate;
@@ -92,42 +51,47 @@ namespace barcode
             Hash2 = Convert.ToString(Total);
 
             Console.Clear();
-            Console.WriteLine(StartSymbol + " " + Regex.Replace(VirtualBarCode, ".{2}", "$0 ") + " [" + Hash2 + "] " + StopSymbol);
+            Console.WriteLine(StartSymbol + " " + Regex.Replace(VirtualBarCode, ".{2}", "$0 ") + "[" + Hash2 + "] " + StopSymbol);
             Console.ReadLine();
-
         }
 
         static string AccountNumberCheck(string GivenAccountNumber)
         {
-            if (GivenAccountNumber.Contains(" "))
+
+            Console.WriteLine("Anna saajan tilinumero");
+            GivenAccountNumber = Console.ReadLine();
+
+            if (GivenAccountNumber.Contains("-") || GivenAccountNumber.Contains(" "))
             {
+                GivenAccountNumber = GivenAccountNumber.Replace("-", "");
                 GivenAccountNumber = GivenAccountNumber.Replace(" ", "");
             }
 
-            if (GivenAccountNumber.Contains("FI"))
+            if (GivenAccountNumber[0] == '4' || GivenAccountNumber[0] == '5')
             {
-                GivenAccountNumber = GivenAccountNumber.Replace("FI", "");
+                GivenAccountNumber = AddZeros(GivenAccountNumber, 14, 6);
             }
             else
             {
-                Console.WriteLine("Annettu tilinumero on virheellinen\n");
-                Query();
+                GivenAccountNumber = AddZeros(GivenAccountNumber, 14, 5);
             }
 
-            if (GivenAccountNumber.Length != 16)
-            {
-                Console.WriteLine("Annettu tilinumero on virheellinen\n");
-                Query();
-            }            
+            GivenAccountNumber += "FI00";
+
             return GivenAccountNumber;
         }
 
         static string SumCheck(string GivenSum)
         {
+            string Sum = "";
+
+            Console.Clear();
+            Console.WriteLine("Anna maksun summa (esim: 99,99)");
+            GivenSum = Console.ReadLine();
+
             if (Regex.IsMatch(GivenSum, @"^[a-zA-Z]+$"))
             {
-                Console.WriteLine("Annettu summa on virheellinen\n");
-                Query();
+                SumCheck(Sum);
             }
             if (GivenSum.Contains(",") || GivenSum.Contains("."))
             {
@@ -138,11 +102,19 @@ namespace barcode
             {
                 GivenSum += "00";
             }
-            return AddZeros(GivenSum, 8);
+            return AddZeros(GivenSum, 8, 0);
         }
 
-        static string IndexNumberCheck(string GivenIndexNumber, bool HashNeed)
+        static string IndexNumberCheck(string GivenIndexNumber)
         {
+            string IndexNumber = "";
+            bool HashNeed = false;
+            bool HashNeedAnswer = false;
+
+            Console.Clear();
+            Console.WriteLine("Anna viitenumero (esim: 123 12345 12345)");
+            GivenIndexNumber = Console.ReadLine();
+
             if (GivenIndexNumber.Contains(" "))
             {
                 GivenIndexNumber = GivenIndexNumber.Replace(" ", "");
@@ -153,9 +125,31 @@ namespace barcode
             if (Lenght > 19 || Regex.IsMatch(GivenIndexNumber, @"^[a-zA-Z]+$"))
             {
                 Console.WriteLine("Annettu viitenumero on virheellinen\n");
-                Query();
+                IndexNumberCheck(IndexNumber);
             }
 
+            while (HashNeedAnswer == false)
+            {
+                Console.Clear();
+                Console.WriteLine("Tarvitaanko viitenumerolle tarkistenumeroa? (y/n)");
+                ConsoleKeyInfo info = default(ConsoleKeyInfo);
+                info = Console.ReadKey();
+                if (info.KeyChar == 'y')
+                {
+                    HashNeed = true;
+                    HashNeedAnswer = true;
+                }
+                else if (info.KeyChar == 'n')
+                {
+                    HashNeed = false;
+                    HashNeedAnswer = true;
+                }
+                else
+                {
+                    HashNeedAnswer = false;
+                }
+            }
+            
             if (HashNeed == true)
             {
                 int i;
@@ -190,20 +184,25 @@ namespace barcode
 
                 GivenIndexNumber = GivenIndexNumber + HashNumber;
 
-                return AddZeros(GivenIndexNumber, 20);
+                return AddZeros(GivenIndexNumber, 20, 0);
             }
             else
             {
-                return AddZeros(GivenIndexNumber, 20);
+                return AddZeros(GivenIndexNumber, 20, 0);
             }
         }
 
         static string ExpDateCheck(string GivenExpDate)
         {
+            string ExpDate = "";
+
+            Console.Clear();
+            Console.WriteLine("Anna eräpäivä (esim: 01.01.2017)");
+            GivenExpDate = Console.ReadLine();
+
             if (Regex.IsMatch(GivenExpDate, @"^[a-zA-Z]+$"))
             {
-                Console.WriteLine("Annettu summa on virheellinen\n");
-                Query();
+                ExpDateCheck(ExpDate);
             }
             if (GivenExpDate.Contains("."))
             {
@@ -211,26 +210,48 @@ namespace barcode
             }
             if (GivenExpDate.Length != 8)
             {
-                Console.WriteLine("Annettu eräpäivä on virheellinen\n");
-                Query();
+                ExpDateCheck(ExpDate);
             }
 
             GivenExpDate = Convert.ToString(GivenExpDate[6]) + Convert.ToString(GivenExpDate[7]) + Convert.ToString(GivenExpDate[2]) + Convert.ToString(GivenExpDate[3]) + Convert.ToString(GivenExpDate[0]) + Convert.ToString(GivenExpDate[1]);
             return GivenExpDate;
         }
 
-        static string AddZeros(string GivenString, int MaxLenght)
+        static string AddZeros(string GivenString, int MaxLenght, int StartPoint)
         {
             int Lenght = GivenString.Length;
             int i;
             StringBuilder sb = new StringBuilder();
+            StringBuilder Start = new StringBuilder();
+            StringBuilder End = new StringBuilder();
 
-            for (i = Lenght; i < MaxLenght; i++)
+            if (StartPoint == 0)
             {
-                sb.Append("0");
+                for (i = Lenght; i < MaxLenght; i++)
+                {
+                    sb.Append("0");
+                }
+                sb.Append(GivenString);
+                return sb.ToString();
             }
-            sb.Append(GivenString);
-            return sb.ToString();
+            else
+            {
+                for (i = 0; i < StartPoint; i++)
+                {
+                    Start.Append(Convert.ToString(GivenString[i]));
+                }
+                for (i = Lenght; i < MaxLenght; i++)
+                {
+                    sb.Append("0");
+                }
+                for (i = StartPoint + 1; i < Lenght; i++)
+                {
+                    End.Append(Convert.ToString(GivenString[i]));
+                }
+                Start.Append(sb);
+                Start.Append(End);
+                return Start.ToString();
+            }
         }
     }
 }
