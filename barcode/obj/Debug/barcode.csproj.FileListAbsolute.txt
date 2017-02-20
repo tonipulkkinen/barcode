@@ -1,0 +1,6 @@
+D:\dev\barcode\barcode\bin\Debug\barcode.exe.config
+D:\dev\barcode\barcode\obj\Debug\barcode.csprojResolveAssemblyReference.cache
+D:\dev\barcode\barcode\bin\Debug\barcode.exe
+D:\dev\barcode\barcode\bin\Debug\barcode.pdb
+D:\dev\barcode\barcode\obj\Debug\barcode.exe
+D:\dev\barcode\barcode\obj\Debug\barcode.pdb
