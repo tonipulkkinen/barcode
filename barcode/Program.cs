@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Numerics;
 using System.Threading.Tasks;
 
 
@@ -47,8 +48,7 @@ namespace barcode
                 Total += Convert.ToInt32(HashSum) * Multiplier;
             }
 
-            Total = Total / 103;
-            Hash2 = Convert.ToString(Total);
+            Hash2 = Convert.ToString(Total % 103);
 
             Console.Clear();
             Console.WriteLine(StartSymbol + " " + Regex.Replace(VirtualBarCode, ".{2}", "$0 ") + "[" + Hash2 + "] " + StopSymbol);
@@ -57,6 +57,7 @@ namespace barcode
 
         static string AccountNumberCheck(string GivenAccountNumber)
         {
+            string CountryIdentifier = "FI";
 
             Console.WriteLine("Anna saajan tilinumero");
             GivenAccountNumber = Console.ReadLine();
@@ -67,18 +68,33 @@ namespace barcode
                 GivenAccountNumber = GivenAccountNumber.Replace(" ", "");
             }
 
-            if (GivenAccountNumber[0] == '4' || GivenAccountNumber[0] == '5')
+            if (GivenAccountNumber.Length == 9)
             {
-                GivenAccountNumber = AddZeros(GivenAccountNumber, 14, 6);
+                if (GivenAccountNumber[0] == '4' || GivenAccountNumber[0] == '5')
+                {
+                    GivenAccountNumber = AddZeros(GivenAccountNumber, 14, 6);
+                }
+                else
+                {
+                    GivenAccountNumber = AddZeros(GivenAccountNumber, 14, 5);
+                }
+
+                string HashNumber = AccountHashNumber(GivenAccountNumber, CountryIdentifier);
+
+                GivenAccountNumber = HashNumber + GivenAccountNumber;
+
+                return GivenAccountNumber;
+            }
+            else if (GivenAccountNumber.Length == 18)
+            {
+                GivenAccountNumber = GivenAccountNumber.Replace(CountryIdentifier, "");
+                return GivenAccountNumber;
             }
             else
             {
-                GivenAccountNumber = AddZeros(GivenAccountNumber, 14, 5);
+                return AccountNumberCheck(GivenAccountNumber);
             }
 
-            GivenAccountNumber += "FI00";
-
-            return GivenAccountNumber;
         }
 
         static string SumCheck(string GivenSum)
@@ -217,6 +233,41 @@ namespace barcode
             return GivenExpDate;
         }
 
+        static string AccountHashNumber(string AccountNumber, string CountryIdentifier)
+        {
+            string ChangedAccount = string.Empty;
+            
+            AccountNumber += CountryIdentifier + "00";
+
+            int Lenght = AccountNumber.Length;
+
+            string[] array = new string[26] { "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z" };
+
+            int i;
+            int pos;
+            for (i = 0; i < Lenght; i++)
+            {
+                pos = Array.IndexOf(array, Convert.ToString(AccountNumber[i]));
+                if (pos > -1)
+                {
+                    ChangedAccount += pos + 10;
+                }
+                else
+                {
+                    ChangedAccount += AccountNumber[i];
+                }
+            }
+
+            BigInteger BigInt = BigInteger.Parse(ChangedAccount);
+            string HashNumber = Convert.ToString((98 - (BigInt % 97)));
+            if (Convert.ToInt32(HashNumber) < 10)
+            {
+                HashNumber = "0" + HashNumber;
+            }
+
+            return HashNumber;
+        }
+
         static string AddZeros(string GivenString, int MaxLenght, int StartPoint)
         {
             int Lenght = GivenString.Length;
@@ -236,7 +287,7 @@ namespace barcode
             }
             else
             {
-                for (i = 0; i < StartPoint; i++)
+                for (i = 0; i <= StartPoint; i++)
                 {
                     Start.Append(Convert.ToString(GivenString[i]));
                 }
